@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:amq="http://activemq.apache.org/schema/core"
+	xmlns:jms="http://www.springframework.org/schema/jms" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.1.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+        http://www.springframework.org/schema/jms
+        http://www.springframework.org/schema/jms/spring-jms-4.1.xsd
+        http://activemq.apache.org/schema/core
+        http://activemq.apache.org/schema/core/activemq-core-5.12.1.xsd">
+
+	<context:component-scan base-package="org.wang.activemq" />
+
+	<amq:connectionFactory id="amqConnectionFactory"
+		brokerURL="tcp://localhost:61616" />
+
+	<bean id="connectionFactory"
+		class="org.springframework.jms.connection.CachingConnectionFactory">
+		<constructor-arg ref="amqConnectionFactory" />
+		<property name="sessionCacheSize" value="100" />
+		<property name="clientId" value="spring_xml_client" />
+	</bean>
+
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property name="connectionFactory" ref="connectionFactory" />
+	</bean>
+
+	<bean id="queue" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg>
+			<value>xml-destination</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="topic" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg>
+			<value>xml-destination</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="messageListener" class="org.wang.activemq.MessageListener" />
+
+	<bean id="queueListenerContainer"
+		class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="destination" ref="queue" />
+		<property name="messageListener" ref="messageListener" />
+	</bean>
+
+	<bean id="topicListenerContainer"
+		class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="destination" ref="topic" />
+		<property name="messageListener" ref="messageListener" />
+	</bean>
+
+	<bean id="durableTopicListenerContainer"
+		class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="destination" ref="topic" />
+		<property name="messageListener" ref="messageListener" />
+		<property name="pubSubDomain" value="true" />
+		<property name="subscriptionDurable" value="true" />
+	</bean>
+
+</beans>
